@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inventory Recommendations - SmartCart{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-list text-primary"></i>
+                        Complete Inventory Recommendations
+                    </h1>
+                    <p class="text-muted">Comprehensive inventory analysis and recommendations for all categories</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'inventory_dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <a href="{% url 'demand_analysis' %}" class="btn btn-outline-info">
+                        <i class="fas fa-chart-bar"></i> Demand Analysis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i>
+        {{ error }}
+    </div>
+    {% else %}
+
+    <!-- Category Performance Summary -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar"></i> Category Performance Summary
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if category_performance %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="performanceTable">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Total Revenue</th>
+                                    <th>Total Quantity</th>
+                                    <th>Avg Price</th>
+                                    <th>Sales Count</th>
+                                    <th>Demand Variability</th>
+                                    <th>Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in category_performance %}
+                                <tr>
+                                    <td><strong>{{ item.category }}</strong></td>
+                                    <td>${{ item.total_revenue|floatformat:2 }}</td>
+                                    <td>{{ item.total_quantity|floatformat:0 }}</td>
+                                    <td>${{ item.avg_price|floatformat:2 }}</td>
+                                    <td>{{ item.sales_count|floatformat:0 }}</td>
+                                    <td>
+                                        <span class="badge {% if item.demand_variability < 0.5 %}badge-success{% elif item.demand_variability < 1.0 %}badge-warning{% else %}badge-danger{% endif %}">
+                                            {{ item.demand_variability|floatformat:3 }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-primary" 
+                                                 role="progressbar" 
+                                                 style="width: 80%">
+                                                80%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-bar fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">No performance data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Recommendations -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-boxes"></i> Inventory Recommendations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if inventory_recommendations %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="recommendationsTable">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Avg Daily Demand</th>
+                                    <th>Safety Stock</th>
+                                    <th>Reorder Point</th>
+                                    <th>EOQ</th>
+                                    <th>Max Inventory</th>
+                                    <th>Lead Time</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category, rec in inventory_recommendations.items %}
+                                <tr>
+                                    <td><strong>{{ rec.category }}</strong></td>
+                                    <td>{{ rec.avg_daily_demand|floatformat:1 }}</td>
+                                    <td>{{ rec.safety_stock|floatformat:0 }}</td>
+                                    <td>
+                                        <span class="badge badge-info">{{ rec.reorder_point|floatformat:0 }}</span>
+                                    </td>
+                                    <td>{{ rec.economic_order_quantity|floatformat:0 }}</td>
+                                    <td>{{ rec.max_inventory_level|floatformat:0 }}</td>
+                                    <td>{{ rec.lead_time_days }} days</td>
+                                    <td>
+                                        <a href="{% url 'category_forecast' rec.category %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-chart-line"></i> View Forecast
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-boxes fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">No inventory recommendations available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Insights -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-lightbulb"></i> Key Insights
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <strong>High Demand Categories:</strong> Focus on categories with high total revenue
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            <strong>High Variability:</strong> Categories with demand variability > 1.0 need more safety stock
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-chart-line text-info"></i>
+                            <strong>Reorder Points:</strong> Order when stock reaches the reorder point level
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-calculator text-primary"></i>
+                            <strong>EOQ:</strong> Economic Order Quantity minimizes total inventory costs
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">
+                        <i class="fas fa-tools"></i> Recommendations
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-arrow-up text-success"></i>
+                            <strong>Increase Stock:</strong> For categories with positive demand trends
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-arrow-down text-danger"></i>
+                            <strong>Reduce Stock:</strong> For categories with declining demand
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-clock text-info"></i>
+                            <strong>Monitor Lead Times:</strong> Adjust safety stock based on supplier lead times
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-chart-pie text-primary"></i>
+                            <strong>Seasonal Adjustments:</strong> Consider seasonal demand patterns
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+
+<style>
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+.progress {
+    background-color: #f8f9fc;
+}
+</style>
+{% endblock %} 

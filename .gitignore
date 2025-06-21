@@ -1,0 +1,24 @@
+# Virtual environment
+env/
+
+# Bytecode and cache
+__pycache__/
+*.py[cod]
+
+# SQLite database
+*.sqlite3
+
+# Django migration artifacts
+*/migrations/
+!*/migrations/__init__.py
+
+# Logs
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# VS Code / PyCharm
+.vscode/
+.idea/

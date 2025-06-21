@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% load static %}
+{% load inventory_filters %}
+
+{% block title %}Demand Analysis - SmartCart{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-chart-bar text-primary"></i>
+                        Demand Analysis & Trends
+                    </h1>
+                    <p class="text-muted">Comprehensive demand analysis and trend identification</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'inventory_dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <a href="{% url 'inventory_recommendations' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> Recommendations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demand Trends Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-line"></i> Demand Trends by Category
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="trendsChart" width="400" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Category Performance -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-chart-pie"></i> Category Performance Analysis
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if category_performance %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="analysisTable">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Total Revenue</th>
+                                    <th>Avg Daily Demand</th>
+                                    <th>Demand Trend</th>
+                                    <th>Variability</th>
+                                    <th>Performance Score</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in category_performance %}
+                                <tr>
+                                    <td><strong>{{ item.category }}</strong></td>
+                                    <td>${{ item.total_revenue|floatformat:2 }}</td>
+                                    <td>{{ item.avg_quantity|floatformat:1 }}</td>
+                                    <td>
+                                        {% if demand_trends %}
+                                            <span class="badge badge-success">Growing</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">No Data</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if item.demand_variability < 0.5 %}badge-success{% elif item.demand_variability < 1.0 %}badge-warning{% else %}badge-danger{% endif %}">
+                                            {{ item.demand_variability|floatformat:3 }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-primary" 
+                                                 role="progressbar" 
+                                                 style="width: 80%">
+                                                80%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'category_forecast' item.category %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-chart-line"></i> Forecast
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-bar fa-3x text-gray-300 mb-3"></i>
+                        <p class="text-gray-500">No performance data available</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Demand Insights -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-lightbulb"></i> Demand Insights
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if demand_trends %}
+                    <div class="mb-3">
+                        <h6 class="text-success">Growing Categories</h6>
+                        {% for category, trend in demand_trends.items %}
+                            {% if trend.trend_slope > 0 %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>{{ category }}</span>
+                                <span class="badge badge-success">+{{ trend.trend_slope|floatformat:3 }}</span>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-danger">Declining Categories</h6>
+                        {% for category, trend in demand_trends.items %}
+                            {% if trend.trend_slope < 0 %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>{{ category }}</span>
+                                <span class="badge badge-danger">{{ trend.trend_slope|floatformat:3 }}</span>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-4">
+                        <h6 class="text-info">Recommendations</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-up text-success"></i>
+                                Increase inventory for growing categories
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-down text-danger"></i>
+                                Reduce inventory for declining categories
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-chart-line text-info"></i>
+                                Monitor trends weekly for adjustments
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">
+                        <i class="fas fa-tachometer-alt"></i> Performance Metrics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if category_performance %}
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="h4 text-primary">{{ category_performance|length }}</div>
+                            <small class="text-muted">Total Categories</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="h4 text-success">{{ demand_trends|length }}</div>
+                            <small class="text-muted">Trends Analyzed</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if demand_trends %}
+    const categories = {{ categories|safe }};
+    const demandTrends = {{ demand_trends|safe }};
+    
+    // Prepare chart data
+    const labels = Object.keys(demandTrends);
+    const trendData = labels.map(category => demandTrends[category].trend_slope);
+    const avgDemandData = labels.map(category => demandTrends[category].avg_demand);
+    
+    const ctx = document.getElementById('trendsChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Demand Trend Slope',
+                data: trendData,
+                backgroundColor: trendData.map(value => value > 0 ? 'rgba(75, 192, 192, 0.8)' : 'rgba(255, 99, 132, 0.8)'),
+                borderColor: trendData.map(value => value > 0 ? 'rgb(75, 192, 192)' : 'rgb(255, 99, 132)'),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Demand Trends by Category'
+                },
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Trend Slope'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Category'
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+
+<style>
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+.progress {
+    background-color: #f8f9fc;
+}
+</style>
+{% endblock %} 

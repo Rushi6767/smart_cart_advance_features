@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Inventory Dashboard - SmartCart{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-chart-line text-primary"></i>
+                    Inventory Forecasting Dashboard
+                </h1>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'inventory_recommendations' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list"></i> Recommendations
+                    </a>
+                    <a href="{% url 'demand_analysis' %}" class="btn btn-outline-info">
+                        <i class="fas fa-chart-bar"></i> Demand Analysis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Categories
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_categories }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tags fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Low Stock Alerts
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_alerts }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Top Category
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ top_category_name }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-trophy fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Data Status
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if category_performance %}Active{% else %}Inactive{% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-database fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Top Performing Categories -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Top Performing Categories</h6>
+                    <a href="{% url 'demand_analysis' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if top_categories %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Total Revenue</th>
+                                        <th>Total Quantity</th>
+                                        <th>Avg Price</th>
+                                        <th>Demand Variability</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in top_categories %}
+                                    <tr>
+                                        <td><strong>{{ item.category }}</strong></td>
+                                        <td>${{ item.total_revenue|floatformat:2 }}</td>
+                                        <td>{{ item.total_quantity|floatformat:0 }}</td>
+                                        <td>${{ item.avg_price|floatformat:2 }}</td>
+                                        <td>
+                                            <span class="badge {% if item.demand_variability < 0.5 %}badge-success{% elif item.demand_variability < 1.0 %}badge-warning{% else %}badge-danger{% endif %}">
+                                                {{ item.demand_variability|floatformat:3 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'category_forecast' item.category %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-chart-line"></i> Forecast
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-bar fa-3x text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">No category data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Low Stock Alerts -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-danger">
+                        <i class="fas fa-exclamation-triangle"></i> Low Stock Alerts
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if low_stock_alerts %}
+                        {% for alert in low_stock_alerts %}
+                        <div class="alert alert-{% if alert.urgency == 'HIGH' %}danger{% else %}warning{% endif %} mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ alert.category }}</strong><br>
+                                    <small>Current: {{ alert.current_stock }} | Reorder: {{ alert.reorder_point|floatformat:0 }}</small>
+                                </div>
+                                <div class="text-right">
+                                    <span class="badge badge-{% if alert.urgency == 'HIGH' %}danger{% else %}warning{% endif %}">
+                                        {{ alert.urgency }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <small>Recommended Order: {{ alert.recommended_order|floatformat:0 }} units</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <p class="text-success">All categories have sufficient stock!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Current Inventory Overview -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-boxes"></i> Current Inventory
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if current_inventory %}
+                        {% for category, stock in current_inventory.items %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>{{ category }}</span>
+                            <span class="badge badge-info">{{ stock }} units</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No inventory data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+</style>
+{% endblock %} 

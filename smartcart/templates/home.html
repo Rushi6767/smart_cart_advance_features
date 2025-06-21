@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block content %}
+<!-- ========================= SECTION MAIN ========================= -->
+<section class="section-intro py-5 bg-dark text-white">
+    <div class="container text-center">
+        <div class="intro-banner-wrap">
+            <img src="{% static 'images/banners/1.jpg' %}" class="img-fluid rounded shadow-lg">
+        </div>
+    </div> 
+</section>
+<!-- ========================= SECTION MAIN END// ========================= -->
+
+<!-- ========================= SECTION  ========================= -->
+<section class="section-name py-5 bg-light">
+    <div class="container">
+        <header class="section-heading d-flex justify-content-between align-items-center mb-4">
+            <h3 class="section-title text-dark">Popular Products</h3>
+            <a href="{% url 'store' %}" class="btn btn-primary">See all</a>
+        </header>
+
+        <div class="row">
+            {% for product in products %}
+            <div class="col-md-3 mb-4">
+                <div class="card card-product-grid shadow-sm border-0">
+                    <a href="{{ product.get_url }}" class="img-wrap">
+                        <img src="{{ product.images.url }}" class="card-img-top rounded">
+                    </a>
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <a href="./product-detail.html" class="text-dark font-weight-bold">{{ product.product_name }}</a>
+                        </h5>
+                        <div class="price text-success h5">${{ product.price }}</div>
+                        <a href="{{ product.get_url }}" class="btn btn-sm btn-outline-primary mt-2">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+<!-- ========================= SECTION END// ========================= -->
+
+{% endblock content %}
