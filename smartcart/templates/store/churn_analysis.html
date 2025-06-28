@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% load static %}
+{% load churn_filters %}
+
+{% block title %}Churn Analysis - SmartCart{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-chart-line text-info"></i>
+                        Churn Analysis Dashboard
+                    </h1>
+                    <p class="text-muted">Comprehensive analysis of customer churn patterns and insights</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'churn_prediction' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-magic"></i> Predict Churn
+                    </a>
+                    <a href="{% url 'inventory_dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Overall Churn Rate
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ churn_rate }}%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Avg Satisfaction
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ avg_satisfaction }}/5</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-star fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Avg Purchases
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ avg_purchases }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Days Since Last Purchase
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ avg_days_since }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Feature Importance -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar"></i> Feature Importance
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if feature_importance %}
+                        <canvas id="featureImportanceChart" width="400" height="200"></canvas>
+                        <div class="mt-3">
+                            <h6 class="text-primary">Top Factors Affecting Churn:</h6>
+                            <div class="row">
+                                {% for feature, importance in feature_importance.items|slice:":6" %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="small">{{ feature|title }}</span>
+                                        <span class="badge badge-primary">{{ importance|floatformat:3 }}</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-primary" 
+                                             role="progressbar" 
+                                             style="width: {{ importance|multiply:100 }}%">
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-bar fa-3x text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">No feature importance data available. Please train the model first.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-lightbulb"></i> Key Insights
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-danger">High Churn Risk Indicators</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-times text-danger"></i> Low customer satisfaction (≤2)</li>
+                            <li><i class="fas fa-times text-danger"></i> Long time since last purchase (≥30 days)</li>
+                            <li><i class="fas fa-times text-danger"></i> Few total purchases (≤3)</li>
+                            <li><i class="fas fa-times text-danger"></i> Low average purchase value</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-success">Retention Factors</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-check text-success"></i> High satisfaction scores (≥4)</li>
+                            <li><i class="fas fa-check text-success"></i> Recent purchase activity (≤7 days)</li>
+                            <li><i class="fas fa-check text-success"></i> Multiple purchases (≥10)</li>
+                            <li><i class="fas fa-check text-success"></i> Higher average purchase values</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h6 class="text-info">Recommendations</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-lightbulb text-warning"></i> Focus on customer satisfaction</li>
+                            <li><i class="fas fa-lightbulb text-warning"></i> Implement re-engagement campaigns</li>
+                            <li><i class="fas fa-lightbulb text-warning"></i> Offer personalized incentives</li>
+                            <li><i class="fas fa-lightbulb text-warning"></i> Improve customer service</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Performance -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-tachometer-alt"></i> Model Performance
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="h4 text-primary">Random Forest</div>
+                            <small class="text-muted">Algorithm</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="h4 text-success">85%+</div>
+                            <small class="text-muted">Accuracy</small>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <a href="{% url 'train_churn_model' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-sync"></i> Retrain Model
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Churn Prevention Strategies -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-warning">
+                        <i class="fas fa-shield-alt"></i> Churn Prevention Strategies
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-headset fa-3x text-primary mb-2"></i>
+                                <h6 class="text-primary">Customer Service</h6>
+                                <p class="small text-muted">Improve response times and service quality to increase satisfaction scores.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-gift fa-3x text-success mb-2"></i>
+                                <h6 class="text-success">Loyalty Programs</h6>
+                                <p class="small text-muted">Implement rewards and incentives to encourage repeat purchases.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center mb-3">
+                                <i class="fas fa-bullhorn fa-3x text-info mb-2"></i>
+                                <h6 class="text-info">Engagement Campaigns</h6>
+                                <p class="small text-muted">Regular communication and personalized marketing to maintain engagement.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if feature_importance %}
+    const featureData = {{ feature_importance|safe }};
+    const features = Object.keys(featureData);
+    const importance = Object.values(featureData);
+    
+    const ctx = document.getElementById('featureImportanceChart').getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: features.map(f => f.replace(/_/g, ' ').toUpperCase()),
+            datasets: [{
+                label: 'Feature Importance',
+                data: importance,
+                backgroundColor: 'rgba(78, 115, 223, 0.8)',
+                borderColor: 'rgba(78, 115, 223, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Feature Importance for Churn Prediction'
+                },
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Importance Score'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Features'
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+.text-gray-800 {
+    color: #5a5c69 !important;
+}
+.text-gray-300 {
+    color: #dddfeb !important;
+}
+.card {
+    border: none;
+    border-radius: 10px;
+}
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+}
+</style>
+{% endblock %} 

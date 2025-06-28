@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% load static %}
+{% load churn_filters %}
+
+{% block title %}Churn Prediction Result - SmartCart{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-0 text-primary">
+                        <i class="fas fa-chart-pie"></i>
+                        Prediction Result
+                    </h1>
+                    <p class="text-muted">Analysis complete - here's what we found</p>
+                </div>
+                <div>
+                    <a href="{% url 'churn_prediction' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> New Prediction
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Result Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body p-5 text-center">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <!-- Churn Probability Display -->
+                            <div class="mb-4">
+                                <div class="display-1 font-weight-bold 
+                                    {% if risk_level == 'High Risk' %}text-danger
+                                    {% elif risk_level == 'Medium Risk' %}text-warning
+                                    {% else %}text-success{% endif %}">
+                                    {{ churn_probability|floatformat:1 }}%
+                                </div>
+                                <div class="h4 text-muted mb-3">Churn Probability</div>
+                                
+                                <!-- Risk Level Badge -->
+                                <div class="mb-4">
+                                    <span class="badge 
+                                        {% if risk_level == 'High Risk' %}bg-danger
+                                        {% elif risk_level == 'Medium Risk' %}bg-warning
+                                        {% else %}bg-success{% endif %} 
+                                        fs-5 px-4 py-2">
+                                        <i class="fas 
+                                            {% if risk_level == 'High Risk' %}fa-exclamation-triangle
+                                            {% elif risk_level == 'Medium Risk' %}fa-eye
+                                            {% else %}fa-check-circle{% endif %} me-2"></i>
+                                        {{ risk_level }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <!-- Prediction Summary -->
+                            <div class="text-start">
+                                <h5 class="text-primary mb-3">Prediction Summary</h5>
+                                
+                                {% if churn_prediction == 1 %}
+                                    <div class="alert alert-danger">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <strong>This customer is likely to churn.</strong>
+                                        <p class="mb-0 mt-2">Immediate action is recommended to retain this customer.</p>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        <strong>This customer is likely to stay.</strong>
+                                        <p class="mb-0 mt-2">Continue providing excellent service to maintain loyalty.</p>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Progress Bar -->
+                                <div class="mt-4">
+                                    <label class="form-label">Risk Level Indicator</label>
+                                    <div class="progress mb-2" style="height: 30px;">
+                                        <div class="progress-bar 
+                                            {% if risk_level == 'High Risk' %}bg-danger
+                                            {% elif risk_level == 'Medium Risk' %}bg-warning
+                                            {% else %}bg-success{% endif %}" 
+                                            role="progressbar" 
+                                            style="width: {{ churn_probability }}%">
+                                            {{ churn_probability|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        {% if risk_level == 'High Risk' %}
+                                            ⚠️ Immediate attention required
+                                        {% elif risk_level == 'Medium Risk' %}
+                                            👁️ Monitor closely
+                                        {% else %}
+                                            ✅ Low risk customer
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Customer Profile -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg mb-4">
+                <div class="card-header bg-gradient-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>Customer Profile
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Demographics</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Age:</strong></td>
+                                    <td>{{ customer_data.age }} years</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Gender:</strong></td>
+                                    <td>{{ customer_data.gender }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Annual Income:</strong></td>
+                                    <td>${{ customer_data.annual_income|floatformat:0 }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Purchase History</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Total Purchases:</strong></td>
+                                    <td>{{ customer_data.total_purchases }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Avg Purchase Value:</strong></td>
+                                    <td>${{ customer_data.avg_purchase_value|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Days Since Last Purchase:</strong></td>
+                                    <td>{{ customer_data.days_since_last_purchase }} days</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">Customer Satisfaction</h6>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    {% for i in "12345" %}
+                                        <i class="fas fa-star {% if forloop.counter <= customer_data.customer_satisfaction %}text-warning{% else %}text-muted{% endif %} fs-4"></i>
+                                    {% endfor %}
+                                </div>
+                                <span class="badge bg-primary fs-6">{{ customer_data.customer_satisfaction }}/5</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-primary mb-3">Financial Summary</h6>
+                            <div class="alert alert-light">
+                                <strong>Total Customer Value:</strong> ${{ customer_data.total_purchases|multiply:customer_data.avg_purchase_value|floatformat:2 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Recommendations -->
+        <div class="col-lg-4">
+            <!-- Immediate Actions -->
+            <div class="card border-0 shadow-lg mb-4">
+                <div class="card-header bg-gradient-warning text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Recommended Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if risk_level == 'High Risk' %}
+                        <div class="alert alert-danger">
+                            <h6><i class="fas fa-exclamation-triangle"></i> High Priority Actions</h6>
+                            <ul class="list-unstyled small">
+                                <li class="mb-2"><i class="fas fa-phone text-primary"></i> Immediate customer outreach</li>
+                                <li class="mb-2"><i class="fas fa-gift text-success"></i> Personalized retention offers</li>
+                                <li class="mb-2"><i class="fas fa-headset text-info"></i> Customer service intervention</li>
+                                <li class="mb-2"><i class="fas fa-percent text-warning"></i> Special discounts or incentives</li>
+                            </ul>
+                        </div>
+                    {% elif risk_level == 'Medium Risk' %}
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-eye"></i> Monitor & Engage</h6>
+                            <ul class="list-unstyled small">
+                                <li class="mb-2"><i class="fas fa-envelope text-primary"></i> Regular communication</li>
+                                <li class="mb-2"><i class="fas fa-tags text-success"></i> Targeted promotions</li>
+                                <li class="mb-2"><i class="fas fa-chart-line text-info"></i> Track engagement metrics</li>
+                                <li class="mb-2"><i class="fas fa-heart text-warning"></i> Improve customer experience</li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-thumbs-up"></i> Retention Strategies</h6>
+                            <ul class="list-unstyled small">
+                                <li class="mb-2"><i class="fas fa-star text-primary"></i> Loyalty program benefits</li>
+                                <li class="mb-2"><i class="fas fa-share text-success"></i> Referral incentives</li>
+                                <li class="mb-2"><i class="fas fa-plus text-info"></i> Upselling opportunities</li>
+                                <li class="mb-2"><i class="fas fa-handshake text-warning"></i> Relationship building</li>
+                            </ul>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Key Factors -->
+            <div class="card border-0 shadow-lg mb-4">
+                <div class="card-header bg-gradient-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Key Factors
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="text-success">Positive Factors</h6>
+                        <ul class="list-unstyled small">
+                            {% if customer_data.customer_satisfaction >= 4 %}
+                                <li><i class="fas fa-check text-success"></i> High satisfaction score</li>
+                            {% endif %}
+                            {% if customer_data.total_purchases >= 10 %}
+                                <li><i class="fas fa-check text-success"></i> Frequent purchases</li>
+                            {% endif %}
+                            {% if customer_data.days_since_last_purchase <= 7 %}
+                                <li><i class="fas fa-check text-success"></i> Recent activity</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-danger">Risk Factors</h6>
+                        <ul class="list-unstyled small">
+                            {% if customer_data.customer_satisfaction <= 2 %}
+                                <li><i class="fas fa-times text-danger"></i> Low satisfaction score</li>
+                            {% endif %}
+                            {% if customer_data.days_since_last_purchase >= 30 %}
+                                <li><i class="fas fa-times text-danger"></i> Long time since last purchase</li>
+                            {% endif %}
+                            {% if customer_data.total_purchases <= 3 %}
+                                <li><i class="fas fa-times text-danger"></i> Few purchases</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>Next Steps
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'churn_prediction' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-2"></i>Predict Another Customer
+                        </a>
+                        <a href="{% url 'churn_analysis' %}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-line me-2"></i>View Analysis
+                        </a>
+                        <a href="{% url 'inventory_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.bg-gradient-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.progress {
+    border-radius: 15px;
+}
+
+.badge {
+    border-radius: 10px;
+}
+
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.display-1 {
+    font-size: 4rem;
+    font-weight: 700;
+}
+
+.fs-5 {
+    font-size: 1.25rem !important;
+}
+
+.fs-6 {
+    font-size: 1rem !important;
+}
+</style>
+{% endblock %} 

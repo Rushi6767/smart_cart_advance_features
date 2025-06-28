@@ -12,6 +12,9 @@ from orders.models import OrderProduct
 from store.utils.recommendation import recommend_products
 from store.utils.inventory_forecasting import inventory_forecaster
 import json
+from .utils.churn_prediction import ChurnPredictionModel, train_churn_model
+from django.http import JsonResponse
+import os
 
 
 def store(request, category_slug=None):
@@ -292,3 +295,135 @@ def demand_analysis(request):
     except Exception as e:
         messages.error(request, f"Error analyzing demand: {e}")
         return render(request, 'store/demand_analysis.html', {})
+
+def churn_prediction(request):
+    """Churn prediction dashboard"""
+    context = {
+        'page_title': 'Churn Prediction',
+        'page_description': 'Customer churn prediction and analysis'
+    }
+    return render(request, 'store/churn_prediction.html', context)
+
+def train_churn_model_view(request):
+    """Train the churn prediction model"""
+    print("🔍 DEBUG: train_churn_model_view called")
+    print(f"🔍 DEBUG: Request method = {request.method}")
+    
+    if request.method == 'POST':
+        print("🔍 DEBUG: POST request received")
+        try:
+            print("🔍 DEBUG: About to call train_churn_model()")
+            # Train the model
+            churn_model = train_churn_model()
+            print(f"🔍 DEBUG: train_churn_model() returned: {churn_model}")
+            
+            if churn_model:
+                print("🔍 DEBUG: Model training successful")
+                messages.success(request, 'Churn prediction model trained successfully!')
+            else:
+                print("🔍 DEBUG: Model training failed - returned None")
+                messages.error(request, 'Failed to train churn prediction model.')
+                
+        except Exception as e:
+            print(f"🔍 DEBUG: Exception occurred: {str(e)}")
+            print(f"🔍 DEBUG: Exception type: {type(e)}")
+            import traceback
+            print(f"🔍 DEBUG: Full traceback: {traceback.format_exc()}")
+            messages.error(request, f'Error training model: {str(e)}')
+    else:
+        print("🔍 DEBUG: Not a POST request")
+    
+    print("🔍 DEBUG: About to redirect to churn_prediction")
+    return redirect('churn_prediction')
+
+def predict_customer_churn(request):
+    """Predict churn for a specific customer"""
+    if request.method == 'POST':
+        try:
+            # Get customer data from form
+            customer_data = {
+                'age': int(request.POST.get('age', 0)),
+                'gender': request.POST.get('gender', 'Male'),
+                'annual_income': float(request.POST.get('annual_income', 0)),
+                'total_purchases': int(request.POST.get('total_purchases', 0)),
+                'avg_purchase_value': float(request.POST.get('avg_purchase_value', 0)),
+                'days_since_last_purchase': int(request.POST.get('days_since_last_purchase', 0)),
+                'customer_satisfaction': int(request.POST.get('customer_satisfaction', 0))
+            }
+            
+            # Load model and make prediction
+            churn_model = ChurnPredictionModel()
+            if churn_model.load_model():
+                prediction = churn_model.predict_churn(customer_data)
+                
+                if prediction:
+                    context = {
+                        'page_title': 'Churn Prediction Result',
+                        'customer_data': customer_data,
+                        'prediction': prediction,
+                        'churn_probability': prediction['churn_probability'],
+                        'risk_level': prediction['risk_level'],
+                        'churn_prediction': prediction['churn_prediction']
+                    }
+                    return render(request, 'store/churn_prediction_result.html', context)
+                else:
+                    messages.error(request, 'Failed to make prediction.')
+            else:
+                messages.error(request, 'Model not found. Please train the model first.')
+                
+        except Exception as e:
+            messages.error(request, f'Error making prediction: {str(e)}')
+    
+    return redirect('churn_prediction')
+
+def churn_analysis(request):
+    """Churn analysis dashboard with insights"""
+    try:
+        # Load model to get feature importance
+        churn_model = ChurnPredictionModel()
+        feature_importance = None
+        
+        if churn_model.load_model():
+            feature_importance = churn_model.get_feature_importance()
+        
+        # Load sample data for analysis
+        df = churn_model.load_data()
+        if df is not None:
+            churn_rate = (df['churn'].sum() / len(df)) * 100
+            avg_satisfaction = df['customer_satisfaction'].mean()
+            avg_purchases = df['total_purchases'].mean()
+            avg_days_since = df['days_since_last_purchase'].mean()
+        else:
+            churn_rate = 0
+            avg_satisfaction = 0
+            avg_purchases = 0
+            avg_days_since = 0
+        
+        context = {
+            'page_title': 'Churn Analysis',
+            'page_description': 'Customer churn analysis and insights',
+            'churn_rate': round(churn_rate, 2),
+            'avg_satisfaction': round(avg_satisfaction, 2),
+            'avg_purchases': round(avg_purchases, 2),
+            'avg_days_since': round(avg_days_since, 2),
+            'feature_importance': feature_importance
+        }
+        
+    except Exception as e:
+        messages.error(request, f'Error loading churn analysis: {str(e)}')
+        context = {
+            'page_title': 'Churn Analysis',
+            'page_description': 'Customer churn analysis and insights'
+        }
+    
+    return render(request, 'store/churn_analysis.html', context)
+
+def check_model_status(request):
+    """Check if churn model files exist"""
+    model_files = ['churn_model.pkl', 'churn_scaler.pkl', 'churn_encoders.pkl']
+    model_exists = all(os.path.exists(file) for file in model_files)
+    
+    return JsonResponse({
+        'model_exists': model_exists,
+        'files': model_files
+    })

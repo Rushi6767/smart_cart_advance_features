@@ -14,4 +14,11 @@ urlpatterns = [
     path('inventory/forecast/<str:category_name>/', views.category_forecast, name='category_forecast'),
     path('inventory/recommendations/', views.inventory_recommendations, name='inventory_recommendations'),
     path('inventory/demand-analysis/', views.demand_analysis, name='demand_analysis'),
+    
+    # Churn Prediction URLs
+    path('churn/prediction/', views.churn_prediction, name='churn_prediction'),
+    path('churn/train/', views.train_churn_model_view, name='train_churn_model'),
+    path('churn/predict/', views.predict_customer_churn, name='predict_customer_churn'),
+    path('churn/analysis/', views.churn_analysis, name='churn_analysis'),
+    path('churn/check-model-status/', views.check_model_status, name='check_model_status'),
 ]
